@@ -34,10 +34,7 @@ tokenizer = BertTokenizer.from_pretrained('bert-large-cased')
 
 max_len = 0
 
-# For every sentence...
 for sent in sentences:
-
-    # Tokenize the text and add `[CLS]` and `[SEP]` tokens.
     input_ids = tokenizer.encode(sent, add_special_tokens=True)
 
     # Update the maximum sentence length.
@@ -98,7 +95,7 @@ print('{:>5,} validation samples'.format(val_size))
 # The DataLoader needs to know our batch size for training, so we specify it 
 # here. For fine-tuning BERT on a specific task, the authors recommend a batch 
 # size of 16 or 32.
-batch_size = 32
+batch_size = 16
 
 # Create the DataLoaders for our training and validation sets.
 # We'll take training samples in random order. 
@@ -118,7 +115,7 @@ validation_dataloader = DataLoader(
 # Load BertForSequenceClassification, the pretrained BERT model with a single 
 # linear classification layer on top. 
 model = BertForSequenceClassification.from_pretrained(
-    "bert-base-uncased", # Use the 12-layer BERT model, with an uncased vocab.
+    "bert-large-cased", # Use the 12-layer BERT model, with an uncased vocab.
     num_labels = 2, # The number of output labels--2 for binary classification.
                     # You can increase this for multi-class tasks.   
     output_attentions = False, # Whether the model returns attentions weights.
@@ -126,28 +123,11 @@ model = BertForSequenceClassification.from_pretrained(
 )
 
 # Tell pytorch to run this model on the GPU.
-model.cuda()
+if torch.cuda.is_available():
+	model.cuda()
 
 # Get all of the model's parameters as a list of tuples.
 params = list(model.named_parameters())
-
-print('The BERT model has {:} different named parameters.\n'.format(len(params)))
-
-print('==== Embedding Layer ====\n')
-
-for p in params[0:5]:
-    print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
-
-print('\n==== First Transformer ====\n')
-
-for p in params[5:21]:
-    print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
-
-print('\n==== Output Layer ====\n')
-
-for p in params[-4:]:
-    print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
-
 optimizer = AdamW(model.parameters(),
                   lr = 2e-5, # args.learning_rate - default is 5e-5, our notebook had 2e-5
                   eps = 1e-8 # args.adam_epsilon  - default is 1e-8.
@@ -156,7 +136,7 @@ optimizer = AdamW(model.parameters(),
 # Number of training epochs. The BERT authors recommend between 2 and 4. 
 # We chose to run for 4, but we'll see later that this may be over-fitting the
 # training data.
-epochs = 4
+epochs = 2
 
 # Total number of training steps is [number of batches] x [number of epochs]. 
 # (Note that this is not the same as the number of training samples).
@@ -194,7 +174,8 @@ seed_val = 42
 random.seed(seed_val)
 np.random.seed(seed_val)
 torch.manual_seed(seed_val)
-torch.cuda.manual_seed_all(seed_val)
+if torch.cuda.is_available():
+	torch.cuda.manual_seed_all(seed_val)
 
 # We'll store a number of quantities such as training and validation loss, 
 # validation accuracy, and timings.
@@ -415,28 +396,6 @@ df_stats = df_stats.set_index('epoch')
 # Display the table.
 print(df_stats)
 
-
-# Use plot styling from seaborn.
-# sns.set(style='darkgrid')
-
-# # Increase the plot size and font size.
-# sns.set(font_scale=1.5)
-# plt.rcParams["figure.figsize"] = (12,6)
-
-# # Plot the learning curve.
-# plt.plot(df_stats['Training Loss'], 'b-o', label="Training")
-# plt.plot(df_stats['Valid. Loss'], 'g-o', label="Validation")
-
-# # Label the plot.
-# plt.title("Training & Validation Loss")
-# plt.xlabel("Epoch")
-# plt.ylabel("Loss")
-# plt.legend()
-# plt.xticks([1, 2, 3, 4])
-
-# plt.show()
-
-
 # Load the dataset into a pandas dataframe.
 df = pd.read_csv("cola_public/raw/out_of_domain_dev.tsv", delimiter='\t', header=None, names=['sentence_source', 'label', 'label_notes', 'sentence'])
 
@@ -550,14 +509,6 @@ for i in range(len(true_labels)):
   matthews_set.append(matthews)
 
 
-  # ax = sns.barplot(x=list(range(len(matthews_set))), y=matthews_set, ci=None)
-
-# plt.title('MCC Score per Batch')
-# plt.ylabel('MCC Score (-1 to +1)')
-# plt.xlabel('Batch #')
-
-# plt.show()
-
 # Combine the results across all batches. 
 flat_predictions = np.concatenate(predictions, axis=0)
 
@@ -575,7 +526,7 @@ print('Total MCC: %.3f' % mcc)
 
 # Saving best-practices: if you use defaults names for the model, you can reload it using from_pretrained()
 
-output_dir = './model_save/'
+output_dir = './model_save_' + str(time.time()) + '/'
 
 # Create output directory if needed
 if not os.path.exists(output_dir):
@@ -589,6 +540,6 @@ model_to_save = model.module if hasattr(model, 'module') else model  # Take care
 model_to_save.save_pretrained(output_dir)
 tokenizer.save_pretrained(output_dir)
 
-# Good practice: save your training arguments together with the trained model
+# # Good practice: save your training arguments together with the trained model
 # torch.save(args, os.path.join(output_dir, 'training_args.bin'))
 
