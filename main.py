@@ -18,10 +18,10 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 
 # pd.set_option('precision', 2)
 
-# if torch.cuda.is_available():    
-#     device = torch.device("cuda")
-# else:
-device = torch.device("cpu")
+if torch.cuda.is_available():    
+    device = torch.device("cuda")
+else:
+	device = torch.device("cpu")
 
 df = pd.read_csv("cola_public/raw/in_domain_train.tsv", delimiter='\t', header=None, names=['sentence_source', 'label', 'label_notes', 'sentence'])
 print('Number of training sentences: {:,}\n'.format(df.shape[0]))
@@ -126,7 +126,7 @@ model = BertForSequenceClassification.from_pretrained(
 )
 
 # Tell pytorch to run this model on the GPU.
-# model.cuda()
+model.cuda()
 
 # Get all of the model's parameters as a list of tuples.
 params = list(model.named_parameters())
@@ -194,7 +194,7 @@ seed_val = 42
 random.seed(seed_val)
 np.random.seed(seed_val)
 torch.manual_seed(seed_val)
-# torch.cuda.manual_seed_all(seed_val)
+torch.cuda.manual_seed_all(seed_val)
 
 # We'll store a number of quantities such as training and validation loss, 
 # validation accuracy, and timings.
