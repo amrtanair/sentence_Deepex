@@ -6,8 +6,8 @@ import os
 import torch
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+#import matplotlib.pyplot as plt
+#import seaborn as sns
 
 from transformers import BertTokenizer
 from transformers import BertForSequenceClassification, AdamW, BertConfig
@@ -47,7 +47,8 @@ for sent in sentences:
     encoded_dict = tokenizer.encode_plus(
                         sent,                      # Sentence to encode.
                         add_special_tokens = True, # Add '[CLS]' and '[SEP]'
-                        max_length = 64,           # Pad & truncate all sentences.
+                        max_length = max_len,
+                        truncation=True,        # Pad & truncate all sentences.
                         pad_to_max_length = True,
                         return_attention_mask = True,   # Construct attn. masks.
                         return_tensors = 'pt',     # Return pytorch tensors.
@@ -69,7 +70,7 @@ train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 print('{:>5,} training samples'.format(train_size))
 print('{:>5,} validation samples'.format(val_size))
 
-batch_size = 8
+batch_size = 2
 
 train_dataloader = DataLoader(
             train_dataset,
