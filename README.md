@@ -1,9 +1,10 @@
-# sentence_Deepex
+# sentence_deepex
 
 Finetuning the CoLa dataset on two models, BERT and GPT-2. 
 The metrics used to evaluate, in addition to accuracy is the MCC score. 
 
-Date: 10/11/2023
+### Date: 10/11/2023
+
 Updated and cleaned the code. Changed file names. 
 For the BERT model, the initial MCC score, while using cross entropy loss was 0.55. The score is decent, however, the validation loss was increasing while training, which seemed odd. 
 The F1 score for the OIE-2016 dataset using this finetuned model was 45.7. 
